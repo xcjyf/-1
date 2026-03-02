@@ -7,19 +7,15 @@
 #include <malloc.h>
 #include <time.h>
 #include <windows.h>
-
 #define APPEAL_FILE "appeals.dat"
-
 typedef struct User {
     char username[20];
     char password[20];
     int type;               // 0: 学生, 1: 老师, 2: 管理员
     long long student_id;
 } User;
-
 User current_user;
 char current_teacher_class[20] = "";   // 当前登录教师管理的班级
-
 typedef struct Student {
     long long number;
     char name[20];
@@ -30,12 +26,10 @@ typedef struct Student {
     float english;
     float sum;
 } Student;
-
 typedef struct Node {
     Student stu;
     struct Node* next;
 } Node;
-
 typedef struct Appeal {
     int id;
     long long student_id;
@@ -48,19 +42,15 @@ typedef struct Appeal {
     time_t reply_time;
     struct Appeal* next;
 } Appeal;
-
 Appeal* appealListHead = NULL;
 int nextAppealId = 1;
-
 typedef struct Teacher {
     char id[20];
     char password[20];
     char name[20];
     char classname[20];
 } Teacher;
-
-// 函数声明
-// ==================== 教师端菜单 ====================
+//教师端菜单
 int teacherMenu() {
     printf("********************************************\n");
     printf("*            欢迎使用教师端管理系统        *\n");
@@ -82,8 +72,53 @@ int teacherMenu() {
     scanf("%d", &select);
     return select;
 }
+void registerTeacher() {
+    FILE* fp = fopen("teacher.data", "r");
+    Teacher teas[100];
+    int count = 0;
+    if (fp) {
+        while (fscanf(fp, "%s %s %s %s", teas[count].id, teas[count].password,
+            teas[count].name, teas[count].classname) == 4) {
+            count++;
+        }
+        fclose(fp);
+    }
 
-// ==================== 登录系统 ====================
+    char newId[20], newName[20], newClass[20], newPwd[20];
+    printf("请输入工号：");
+    scanf("%s", newId);
+
+    // 检查工号是否已存在
+    for (int i = 0; i < count; i++) {
+        if (strcmp(teas[i].id, newId) == 0) {
+            printf("工号已存在，注册失败！\n");
+            return;
+        }
+    }
+
+    printf("请输入姓名:");
+    scanf("%s", newName);
+    printf("请输入管理班级:");
+    scanf("%s", newClass);
+    printf("请设置密码:");
+    getchar();  // 清除缓冲区中的换行符
+    fgets(newPwd, 20, stdin);
+    newPwd[strcspn(newPwd, "\n")] = 0;  // 去除末尾换行
+    if (strlen(newPwd) == 0) {
+        strcpy(newPwd, newId);  // 密码默认为工号
+    }
+
+    // 以追加方式打开文件写入新教师
+    fp = fopen("teacher.data", "a");
+    if (!fp) {
+        printf("无法打开教师文件！\n");
+        return;
+    }
+    fprintf(fp, "%s %s %s %s\n", newId, newPwd, newName, newClass);
+    fclose(fp);
+    printf("教师注册成功！请登录。\n");
+}
+//登录系统
 int login(Node* head) {
     int choice;
     char username[20], password[20];
@@ -100,57 +135,83 @@ int login(Node* head) {
     if (choice == 4) {
         return 0;
     }
-    printf("账号> ");
+    printf("工号> ");
     scanf("%s", username);
     printf("密码> ");
     scanf("%s", password);
 
     if (choice == 1) {
-        FILE* fp = fopen("teacher.data", "r");
-        if (!fp) {
-            printf("未检测到教师账号，请创建新账号\n");
-            fp = fopen("teacher.data", "w");
+        while (1) {
+            FILE* fp = fopen("teacher.data", "r");
             if (!fp) {
-                printf("无法创建教师账号文件\n");
-                return 0;
-            }
-            char t_id[20], t_pwd[20], t_name[20], t_class[20];
-            printf("工号> ");
-            scanf("%s", t_id);
-            printf("密码> ");
-            scanf("%s", t_pwd);
-            printf("姓名> ");
-            scanf("%s", t_name);
-            printf("管理班级> ");
-            scanf("%s", t_class);
-            fprintf(fp, "%s %s %s %s\n", t_id, t_pwd, t_name, t_class);
-            fclose(fp);
-            printf("教师账号创建成功！\n");
-            strcpy(current_user.username, t_id);
-            current_user.type = 1;
-            strcpy(current_teacher_class, t_class);
-            return 1;
-        }
-        else {
-            char file_id[20], file_pwd[20], file_name[20], file_class[20];
-            int found = 0;
-            while (fscanf(fp, "%s %s %s %s", file_id, file_pwd, file_name, file_class) == 4) {
-                if (strcmp(username, file_id) == 0 && strcmp(password, file_pwd) == 0) {
-                    found = 1;
-                    strcpy(current_teacher_class, file_class);
-                    break;
+                printf("未检测到教师账号，正在创建新账号...\n");
+                fp = fopen("teacher.data", "w");
+                if (!fp) {
+                    printf("无法创建教师账号文件\n");
+                    return 0;
                 }
-            }
-            fclose(fp);
-            if (found) {
-                strcpy(current_user.username, username);
+                char t_id[20], t_pwd[20], t_name[20], t_class[20];
+                printf("工号> ");
+                scanf("%s", t_id);
+                printf("密码> ");
+                scanf("%s", t_pwd);
+                printf("姓名> ");
+                scanf("%s", t_name);
+                printf("管理班级> ");
+                scanf("%s", t_class);
+                fprintf(fp, "%s %s %s %s\n", t_id, t_pwd, t_name, t_class);
+                fclose(fp);
+                printf("教师账号创建成功！\n");
+                strcpy(current_user.username, t_id);
                 current_user.type = 1;
-                printf("教师登录成功！管理班级：%s\n", current_teacher_class);
-                return 1;
+                strcpy(current_teacher_class, t_class);
+                return 1;  // 登录成功
             }
             else {
-                printf("工号或密码错误！\n");
-                return 0;
+                fclose(fp);  // 文件存在，先关闭
+                int sub_choice;
+                printf("请选择：1.登录 2.注册 3.返回上级\n");
+                printf("选择> ");
+                scanf("%d", &sub_choice);
+
+                if (sub_choice == 1) {
+                    // 原有登录验证逻辑
+                    fp = fopen("teacher.data", "r");
+                    if (!fp) {
+                        printf("文件打开失败！\n");
+                        return 0;
+                    }
+                    char file_id[20], file_pwd[20], file_name[20], file_class[20];
+                    int found = 0;
+                    while (fscanf(fp, "%s %s %s %s", file_id, file_pwd, file_name, file_class) == 4) {
+                        if (strcmp(username, file_id) == 0 && strcmp(password, file_pwd) == 0) {
+                            found = 1;
+                            strcpy(current_teacher_class, file_class);
+                            break;
+                        }
+                    }
+                    fclose(fp);
+                    if (found) {
+                        strcpy(current_user.username, username);
+                        current_user.type = 1;
+                        printf("教师登录成功！管理班级：%s\n", current_teacher_class);
+                        return 1;
+                    }
+                    else {
+                        printf("工号或密码错误！\n");
+                        // 继续循环，重新选择
+                    }
+                }
+                else if (sub_choice == 2) {
+                    registerTeacher();  // 调用注册函数
+                    // 注册完成后继续循环，可再次选择登录
+                }
+                else if (sub_choice == 3) {
+                    return 0;  // 返回上级登录界面
+                }
+                else {
+                    printf("无效选择！\n");
+                }
             }
         }
     }
@@ -209,7 +270,7 @@ int login(Node* head) {
     return 0;
 }
 
-// ==================== 节点创建 ====================
+//节点创建
 Node* creatNode() {
     Node* node = (Node*)malloc(sizeof(Node));
     if (!node) {
@@ -219,8 +280,7 @@ Node* creatNode() {
     node->next = NULL;
     return node;
 }
-
-// ==================== 录入学生 ====================
+//录入学生
 void entryStudent(Node** head) {
     Node* node = creatNode();
     printf("输入学生学号> ");
@@ -255,8 +315,7 @@ void entryStudent(Node** head) {
     }
     printf("录入成功\n");
 }
-
-// ==================== 打印学生 ====================
+//打印学生
 void printStudent(Node* head) {
     printf("*************************************************************\n");
     printf("* 学号  *  姓名  *  班级  *  语文  *  数学  *  英语 *  总分  *\n");
@@ -275,7 +334,7 @@ void printStudent(Node* head) {
     }
 }
 
-// ==================== 保存学生 ====================
+//保存学生
 void saveStudent(Node* head) {
     FILE* fp = fopen("students.data", "wb");
     if (!fp) {
@@ -291,7 +350,7 @@ void saveStudent(Node* head) {
     fclose(fp);
 }
 
-// ==================== 读取学生 ====================
+//读取学生
 void readStudent(Node** head) {
     FILE* fp = fopen("students.data", "rb");
     if (!fp) {
@@ -325,7 +384,7 @@ void readStudent(Node** head) {
     fclose(fp);
 }
 
-// ==================== 统计学生 ====================
+//统计学生
 void countStudent(Node* head) {
     Node* current = head;
     int count = 0;
@@ -352,8 +411,7 @@ void countStudent(Node* head) {
         printf("英语平均分为%.1f\n", englishSum / count);
     }
 }
-
-// ==================== 查找学生 ====================
+//查找学生
 void findStudent(Node* head) {
     if (head == NULL) {
         printf("学生列表为空！\n");
@@ -379,7 +437,7 @@ void findStudent(Node* head) {
     printf("未找到该学生\n");
 }
 
-// ==================== 修改学生成绩 ====================
+//修改学生成绩
 void changeStudent(Node* head) {
     printf("请输入要修改学生学号\n");
     long long stunum;
@@ -402,7 +460,7 @@ void changeStudent(Node* head) {
     printf("未找到该学生\n");
 }
 
-// ==================== 删除学生 ====================
+//删除学生
 Node* deleteStudent(Node* head) {
     if (head == NULL) {
         printf("学生列表为空\n");
@@ -463,7 +521,7 @@ Node* deleteStudent(Node* head) {
     return head;
 }
 
-// ==================== 排序辅助 ====================
+//排序辅助
 int shouldSwap(Student* a, Student* b, int sort_by, int order) {
     float sum_a, sum_b;
     switch (sort_by) {
@@ -490,7 +548,7 @@ int shouldSwap(Student* a, Student* b, int sort_by, int order) {
     else return sum_a > sum_b;
 }
 
-// ==================== 快速排序 ====================
+//快速排序
 Node* quickSort(Node* head, int sort_by, int order) {
     if (head == NULL || head->next == NULL) return head;
     Node* pivot = head;
@@ -530,8 +588,7 @@ Node* quickSort(Node* head, int sort_by, int order) {
     pivot->next = rightHead;
     return newHead;
 }
-
-// ==================== 导出学生信息（文本） ====================
+//导出学生信息
 void exportStudentHuman(Node* head, const char* filename) {
     FILE* fp = fopen(filename, "w");
     if (!fp) {
@@ -553,7 +610,7 @@ void exportStudentHuman(Node* head, const char* filename) {
     fclose(fp);
 }
 
-// ==================== 学生端菜单 ====================
+//学生端菜单
 int studentMenu() {
     printf("********************************************\n");
     printf("*             欢迎使用学生管理系统         *\n");
@@ -570,7 +627,7 @@ int studentMenu() {
     return select;
 }
 
-// ==================== 学生修改密码 ====================
+//学生修改密码
 void changeStudentPassword(Node* head, long long student_id) {
     Node* current = head;
     while (current != NULL) {
@@ -601,7 +658,7 @@ void changeStudentPassword(Node* head, long long student_id) {
     printf("未找到学生信息\n");
 }
 
-// ==================== 学生查看信息 ====================
+//学生查看信息
 void viewStudent(Node* head, long long student_id) {
     Node* current = head;
     Node* target = NULL;
@@ -643,7 +700,7 @@ void viewStudent(Node* head, long long student_id) {
     printf("总分: %.1f (班级排名: %d)\n", total, rank_total);
 }
 
-// ==================== 申诉保存 ====================
+//申诉保存
 void saveAppeals() {
     FILE* fp = fopen(APPEAL_FILE, "wb");
     if (!fp) return;
@@ -655,7 +712,7 @@ void saveAppeals() {
     fclose(fp);
 }
 
-// ==================== 提交申诉 ====================
+//提交申诉
 void submitAppeal(Node* head, long long student_id) {
     Node* p = head;
     char stu_name[20] = "";
@@ -694,8 +751,7 @@ void submitAppeal(Node* head, long long student_id) {
     saveAppeals();
     printf("申诉提交成功！您的申诉ID为：%d\n", a->id);
 }
-
-// ==================== 查看我的申诉 ====================
+//查看我的申诉
 void viewMyAppeals(long long student_id) {
     Appeal* p = appealListHead;
     printf("********************************************\n");
@@ -721,7 +777,7 @@ void viewMyAppeals(long long student_id) {
     if (!found) printf("暂无申诉记录。\n");
 }
 
-// ==================== 管理员菜单 ====================
+//管理员菜单
 void mangerMenu() {
     printf("********************************************\n");
     printf("*               管理员后台管理             *\n");
@@ -735,8 +791,7 @@ void mangerMenu() {
     printf("*                7. 退出登录               *\n");
     printf("********************************************\n");
 }
-
-// ==================== 申诉管理子菜单 ====================
+//申诉管理子菜单
 void appealMenu() {
     printf("********************************************\n");
     printf("*                申诉管理                  *\n");
@@ -748,8 +803,7 @@ void appealMenu() {
     printf("*            5. 返回上一级                 *\n");
     printf("********************************************\n");
 }
-
-// ==================== 管理员查看所有申诉 ====================
+//管理员查看所有申诉
 void adminViewAllAppeals() {
     if (appealListHead == NULL) {
         printf("暂无申诉记录。\n");
@@ -775,7 +829,7 @@ void adminViewAllAppeals() {
     }
 }
 
-// ==================== 管理员删除已处理申诉 ====================
+//管理员删除已处理申诉
 void adminDeleteProcessedAppeals() {
     Appeal* p = appealListHead;
     Appeal* prev = NULL;
@@ -808,7 +862,7 @@ void adminDeleteProcessedAppeals() {
     }
 }
 
-// ==================== 加载申诉 ====================
+//加载申诉
 void loadAppeals() {
     FILE* fp = fopen(APPEAL_FILE, "rb");
     if (!fp) return;
@@ -834,7 +888,7 @@ void loadAppeals() {
     fclose(fp);
 }
 
-// ==================== 管理员查看待处理申诉 ====================
+//管理员查看待处理申诉
 void adminViewPendingAppeals() {
     Appeal* p = appealListHead;
     int found = 0;
@@ -856,7 +910,7 @@ void adminViewPendingAppeals() {
     if (!found) printf("暂无待处理的申诉。\n");
 }
 
-// ==================== 管理员处理申诉 ====================
+//管理员处理申诉
 void adminMarkAppealDone() {
     int id;
     printf("请输入要处理的申诉ID：");
@@ -883,7 +937,7 @@ void adminMarkAppealDone() {
     printf("未找到该申诉ID。\n");
 }
 
-// ==================== 管理员查看学生密码 ====================
+//管理员查看学生密码
 void viewStudentPassword(Node* head) {
     if (head == NULL) {
         printf("学生列表为空！\n");
@@ -908,7 +962,7 @@ void viewStudentPassword(Node* head) {
     printf("未找到该学号的学生！\n");
 }
 
-// ==================== 管理员导出学号密码 ====================
+//管理员导出学号密码
 void exportStudentPasswords(Node* head, const char* filename) {
     FILE* fp = fopen(filename, "w");
     if (!fp) {
@@ -925,7 +979,7 @@ void exportStudentPasswords(Node* head, const char* filename) {
     printf("学号、姓名、班级和密码已成功导出到文件：%s\n", filename);
 }
 
-// ==================== 管理员从文件导入学生 ====================
+//管理员从文件导入学生
 void importStudentsFromFile(Node** head, const char* filename) {
     FILE* fp = fopen(filename, "r");
     if (!fp) {
@@ -985,8 +1039,7 @@ void importStudentsFromFile(Node** head, const char* filename) {
         printf("未导入任何学生。\n");
     }
 }
-
-// ==================== 管理员修改学生成绩（带班级选择） ====================
+//管理员修改学生成绩
 void adminChangeStudent(Node* head) {
     if (head == NULL) {
         printf("学生列表为空！\n");
@@ -1028,7 +1081,7 @@ void adminChangeStudent(Node* head) {
     printf("该班级中未找到该学号！\n");
 }
 
-// ==================== 教师账号管理菜单 ====================
+//教师账号管理菜单
 void adminTeacherMenu() {
     printf("********************************************\n");
     printf("*           管理员-教师账号管理           *\n");
@@ -1041,7 +1094,7 @@ void adminTeacherMenu() {
     printf("********************************************\n");
 }
 
-// ==================== 查看所有教师 ====================
+//查看所有教师
 void adminViewAllTeachers() {
     FILE* fp = fopen("teacher.data", "r");
     if (!fp) {
@@ -1059,7 +1112,7 @@ void adminViewAllTeachers() {
     fclose(fp);
 }
 
-// ==================== 添加教师 ====================
+//添加教师
 void adminAddTeacher() {
     Teacher newTea;
     FILE* fp = fopen("teacher.data", "a+");
@@ -1099,7 +1152,7 @@ void adminAddTeacher() {
     printf("教师添加成功！\n");
 }
 
-// ==================== 删除教师 ====================
+//删除教师
 void adminDeleteTeacher() {
     char delId[20];
     printf("请输入要删除的教师工号：");
@@ -1140,7 +1193,7 @@ void adminDeleteTeacher() {
     printf("教师删除成功！\n");
 }
 
-// ==================== 修改教师信息 ====================
+//修改教师信息
 void adminModifyTeacher() {
     char modId[20];
     printf("请输入要修改的教师工号：");
@@ -1207,7 +1260,7 @@ void adminModifyTeacher() {
     printf("教师信息修改成功！\n");
 }
 
-// ==================== 主函数 ====================
+//主函数
 int main() {
     SetConsoleOutputCP(936);
     SetConsoleCP(936);
