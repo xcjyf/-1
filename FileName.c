@@ -119,31 +119,116 @@ void registerTeacher() {
     printf("教师注册成功！请登录。\n");
 }
 //登录系统
-int login(Node* head) {
-    int choice;
-    char username[20], password[20];
-    printf("********************************************\n");
-    printf("*                请登陆系统                *\n");
-    printf("********************************************\n");
-    printf("*                1. 教师登录               *\n");
-    printf("*                2. 学生登录               *\n");
-    printf("*                3. 管理员登录             *\n");
-    printf("*                4. 退出程序               *\n");
-    printf("********************************************\n");
-    printf("select> ");
-    scanf("%d", &choice);
-    if (choice == 4) {
-        return 0;
-    }
-    printf("工号> ");
-    scanf("%s", username);
-    printf("密码> ");
-    scanf("%s", password);
+void registerAdmin() {
+    FILE* fp = fopen("admin.data", "r");
+    char usernames[100][20];
+    char passwords[100][20];
+    int count = 0;
 
-    if (choice == 1) {
-        while (1) {
+    // 读取现有管理员账号
+    if (fp) {
+        char user[20], pwd[20];
+        while (fscanf(fp, "%19s %19s", user, pwd) == 2) {
+            strcpy(usernames[count], user);
+            strcpy(passwords[count], pwd);
+            count++;
+        }
+        fclose(fp);
+    }
+
+    char newUser[20], newPwd[20];
+    printf("请输入管理员用户名：");
+    scanf("%19s", newUser);
+    getchar(); // 清除换行符
+
+    // 检查用户名是否已存在
+    for (int i = 0; i < count; i++) {
+        if (strcmp(usernames[i], newUser) == 0) {
+            printf("用户名已存在，注册失败！\n");
+            return;
+        }
+    }
+
+    printf("请设置密码（直接回车默认为用户名）：");
+    fgets(newPwd, 20, stdin);
+    newPwd[strcspn(newPwd, "\n")] = 0; // 去除换行
+    if (strlen(newPwd) == 0) {
+        strcpy(newPwd, newUser); // 密码默认为用户名
+    }
+
+    fp = fopen("admin.data", "a");
+    if (!fp) {
+        printf("无法打开管理员文件！\n");
+        return;
+    }
+    fprintf(fp, "%s %s\n", newUser, newPwd);
+    fclose(fp);
+    printf("管理员注册成功！请登录。\n");
+}
+
+// 登录系统（修改后）
+int login(Node* head) {
+    while (1) {  // 外层循环，允许注册后重新显示主菜单
+        int choice;
+        printf("********************************************\n");
+        printf("*                请登陆系统                *\n");
+        printf("********************************************\n");
+        printf("*                1. 教师登录               *\n");
+        printf("*                2. 学生登录               *\n");
+        printf("*                3. 管理员登录             *\n");
+        printf("*                4. 注册账号               *\n");
+        printf("*                5. 退出程序               *\n");
+        printf("********************************************\n");
+        printf("select> ");
+        scanf("%d", &choice);
+        if (choice == 5) {
+            return 0;  // 退出程序
+        }
+
+        if (choice == 4) {
+            // 注册子菜单
+            while (1) {
+                int reg_choice;
+                printf("********************************************\n");
+                printf("*              注册账号                    *\n");
+                printf("********************************************\n");
+                printf("*           1. 注册教师                    *\n");
+                printf("*           2. 注册管理员                  *\n");
+                printf("*           3. 返回上级                    *\n");
+                printf("********************************************\n");
+                printf("选择> ");
+                char buf[10];
+                fgets(buf, sizeof(buf), stdin); // 清空缓冲区并读取
+                if (sscanf(buf, "%d", &reg_choice) != 1) continue;
+
+                if (reg_choice == 1) {
+                    registerTeacher();
+                }
+                else if (reg_choice == 2) {
+                    registerAdmin();  // 需要实现该函数
+                }
+                else if (reg_choice == 3) {
+                    break;  // 返回主菜单
+                }
+                else {
+                    printf("无效选择！\n");
+                }
+            }
+            continue;  // 回到外层循环开头，重新显示主菜单
+        }
+
+        // 只有登录选项才需要输入账号密码
+        char username[20], password[20];
+        printf("工号> ");
+        scanf("%19s", username);
+        printf("密码> ");
+        scanf("%19s", password);
+
+        // 教师登录
+        if (choice == 1) {
             FILE* fp = fopen("teacher.data", "r");
             if (!fp) {
+                // 文件不存在，创建第一个教师并登录
                 printf("未检测到教师账号，正在创建新账号...\n");
                 fp = fopen("teacher.data", "w");
                 if (!fp) {
@@ -152,13 +237,13 @@ int login(Node* head) {
                 }
                 char t_id[20], t_pwd[20], t_name[20], t_class[20];
                 printf("工号> ");
-                scanf("%s", t_id);
+                scanf("%19s", t_id);
                 printf("密码> ");
-                scanf("%s", t_pwd);
+                scanf("%19s", t_pwd);
                 printf("姓名> ");
-                scanf("%s", t_name);
+                scanf("%19s", t_name);
                 printf("管理班级> ");
-                scanf("%s", t_class);
+                scanf("%19s", t_class);
                 fprintf(fp, "%s %s %s %s\n", t_id, t_pwd, t_name, t_class);
                 fclose(fp);
                 printf("教师账号创建成功！\n");
@@ -168,108 +253,96 @@ int login(Node* head) {
                 return 1;  // 登录成功
             }
             else {
-                fclose(fp);  // 文件存在，先关闭
-                int sub_choice;
-                printf("请选择：1.登录 2.注册 3.返回上级\n");
-                printf("选择> ");
-                scanf("%d", &sub_choice);
-
-                if (sub_choice == 1) {
-                    // 原有登录验证逻辑
-                    fp = fopen("teacher.data", "r");
-                    if (!fp) {
-                        printf("文件打开失败！\n");
-                        return 0;
-                    }
-                    char file_id[20], file_pwd[20], file_name[20], file_class[20];
-                    int found = 0;
-                    while (fscanf(fp, "%s %s %s %s", file_id, file_pwd, file_name, file_class) == 4) {
-                        if (strcmp(username, file_id) == 0 && strcmp(password, file_pwd) == 0) {
-                            found = 1;
-                            strcpy(current_teacher_class, file_class);
-                            break;
-                        }
-                    }
-                    fclose(fp);
-                    if (found) {
-                        strcpy(current_user.username, username);
-                        current_user.type = 1;
-                        printf("教师登录成功！管理班级：%s\n", current_teacher_class);
-                        return 1;
-                    }
-                    else {
-                        printf("工号或密码错误！\n");
-                        // 继续循环，重新选择
+                // 文件存在，验证输入的账号密码
+                char file_id[20], file_pwd[20], file_name[20], file_class[20];
+                int found = 0;
+                while (fscanf(fp, "%19s %19s %19s %19s", file_id, file_pwd, file_name, file_class) == 4) {
+                    if (strcmp(username, file_id) == 0 && strcmp(password, file_pwd) == 0) {
+                        found = 1;
+                        strcpy(current_teacher_class, file_class);
+                        break;
                     }
                 }
-                else if (sub_choice == 2) {
-                    registerTeacher();  // 调用注册函数
-                    // 注册完成后继续循环，可再次选择登录
-                }
-                else if (sub_choice == 3) {
-                    return 0;  // 返回上级登录界面
+                fclose(fp);
+                if (found) {
+                    strcpy(current_user.username, username);
+                    current_user.type = 1;
+                    printf("教师登录成功！管理班级：%s\n", current_teacher_class);
+                    return 1;
                 }
                 else {
-                    printf("无效选择！\n");
+                    printf("工号或密码错误！\n");
+                    // 继续外层循环，重新显示主菜单
                 }
             }
         }
-    }
-    else if (choice == 2) {
-        long long stu_num = atoll(username);
-        Node* p = head;
-        while (p != NULL) {
-            if (p->stu.number == stu_num && strcmp(p->stu.password, password) == 0) {
-                strcpy(current_user.username, username);
-                current_user.type = 0;
-                current_user.student_id = stu_num;
-                printf("学生登录成功！\n");
-                return 2;
+        // 学生登录
+        else if (choice == 2) {
+            long long stu_num = atoll(username);
+            Node* p = head;
+            int found = 0;
+            while (p != NULL) {
+                if (p->stu.number == stu_num && strcmp(p->stu.password, password) == 0) {
+                    found = 1;
+                    strcpy(current_user.username, username);
+                    current_user.type = 0;
+                    current_user.student_id = stu_num;
+                    printf("学生登录成功！\n");
+                    return 2;
+                }
+                p = p->next;
             }
-            p = p->next;
+            if (!found) {
+                printf("学号或密码错误！\n");
+                // 继续外层循环
+            }
         }
-        printf("学号或密码错误！\n");
-        return 0;
-    }
-    else if (choice == 3) {
-        FILE* fp = fopen("admin.data", "r");
-        if (!fp) {
-            printf("未检测到管理员账号，正在自动创建新账号...\n");
-            fp = fopen("admin.data", "w");
+        // 管理员登录
+        else if (choice == 3) {
+            FILE* fp = fopen("admin.data", "r");
             if (!fp) {
-                printf("无法创建管理员账号文件！\n");
-                return 0;
-            }
-            fprintf(fp, "%s %s\n", username, password);
-            fclose(fp);
-            printf("管理员账号创建成功！\n");
-            strcpy(current_user.username, username);
-            current_user.type = 2;
-            return 3;
-        }
-        else {
-            char file_user[20], file_pass[20];
-            if (fscanf(fp, "%s %s", file_user, file_pass) != 2) {
-                printf("管理员账号文件格式错误！\n");
+                // 文件不存在，自动创建第一个管理员
+                printf("未检测到管理员账号，正在自动创建新账号...\n");
+                fp = fopen("admin.data", "w");
+                if (!fp) {
+                    printf("无法创建管理员账号文件！\n");
+                    return 0;
+                }
+                fprintf(fp, "%s %s\n", username, password);
                 fclose(fp);
-                return 0;
-            }
-            fclose(fp);
-            if (strcmp(username, file_user) == 0 && strcmp(password, file_pass) == 0) {
+                printf("管理员账号创建成功！\n");
                 strcpy(current_user.username, username);
                 current_user.type = 2;
-                printf("管理员登录成功！\n");
                 return 3;
             }
             else {
-                printf("用户名或密码错误！\n");
-                return 0;
+                // 遍历所有管理员账号进行匹配
+                char file_user[20], file_pass[20];
+                int found = 0;
+                while (fscanf(fp, "%19s %19s", file_user, file_pass) == 2) {
+                    if (strcmp(username, file_user) == 0 && strcmp(password, file_pass) == 0) {
+                        found = 1;
+                        break;
+                    }
+                }
+                fclose(fp);
+                if (found) {
+                    strcpy(current_user.username, username);
+                    current_user.type = 2;
+                    printf("管理员登录成功！\n");
+                    return 3;
+                }
+                else {
+                    printf("用户名或密码错误！\n");
+                    // 继续外层循环
+                }
             }
         }
+        else {
+            printf("无效选项！\n");
+        }
     }
-    return 0;
 }
-
 //节点创建
 Node* creatNode() {
     Node* node = (Node*)malloc(sizeof(Node));
