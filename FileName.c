@@ -60,44 +60,6 @@ typedef struct Teacher {
 } Teacher;
 
 // 函数声明
-int teacherMenu();
-int login(Node* head);
-Node* creatNode();
-void entryStudent(Node** head);
-void printStudent(Node* head);
-void saveStudent(Node* head);
-void readStudent(Node** head);
-void countStudent(Node* head);
-void findStudent(Node* head);
-void changeStudent(Node* head);
-Node* deleteStudent(Node* head);
-int shouldSwap(Student* a, Student* b, int sort_by, int order);
-Node* quickSort(Node* head, int sort_by, int order);
-void exportStudentHuman(Node* head, const char* filename);
-int studentMenu();
-void changeStudentPassword(Node* head, long long student_id);
-void viewStudent(Node* head, long long student_id);
-void saveAppeals();
-void submitAppeal(Node* head, long long student_id);
-void viewMyAppeals(long long student_id);
-void mangerMenu();
-void appealMenu();
-void adminViewAllAppeals();
-void adminDeleteProcessedAppeals();
-void loadAppeals();
-void adminViewPendingAppeals();
-void adminMarkAppealDone();
-void viewStudentPassword(Node* head);
-void exportStudentPasswords(Node* head, const char* filename);
-void importStudentsFromFile(Node** head, const char* filename);
-void adminChangeStudent(Node* head);
-// 教师账号管理函数
-void adminTeacherMenu();
-void adminViewAllTeachers();
-void adminAddTeacher();
-void adminDeleteTeacher();
-void adminModifyTeacher();
-
 // ==================== 教师端菜单 ====================
 int teacherMenu() {
     printf("********************************************\n");
@@ -1000,7 +962,9 @@ void importStudentsFromFile(Node** head, const char* filename) {
             newNode->stu.math = math;
             newNode->stu.english = english;
             newNode->stu.sum = chinese + math + english;
-            if (*head == NULL) *head = newNode;
+            if (*head == NULL) {
+                *head = newNode;
+            }
             else {
                 Node* tail = *head;
                 while (tail->next != NULL) tail = tail->next;
@@ -1252,18 +1216,33 @@ int main() {
     loadAppeals();
     while (1) {
         int login_result = login(head);
-
         if (login_result == 1) {   // 教师登录成功
             while (1) {
                 switch (teacherMenu()) {
-                case 1: entryStudent(&head); break;
-                case 2: printStudent(head); break;
-                case 3: saveStudent(head); break;
-                case 4: readStudent(&head); break;
-                case 5: countStudent(head); break;
-                case 6: findStudent(head); break;
-                case 7: changeStudent(head); break;
-                case 8: head = deleteStudent(head); break;
+                case 1: 
+                    entryStudent(&head); 
+                    break;
+                case 2: 
+                    printStudent(head); 
+                    break;
+                case 3: 
+                    saveStudent(head); 
+                    break;
+                case 4: 
+                    readStudent(&head); 
+                    break;
+                case 5: 
+                    countStudent(head);
+                    break;
+                case 6: 
+                    findStudent(head);
+                    break;
+                case 7: 
+                    changeStudent(head); 
+                    break;
+                case 8: 
+                    head = deleteStudent(head); 
+                    break;
                 case 9:
                     if (head == NULL) printf("学生列表为空，无法排序\n");
                     else {
@@ -1283,8 +1262,11 @@ int main() {
                     exportStudentHuman(head, filename);
                     break;
                 }
-                case 11: printf("退出登录！\n"); goto logout_teacher;
-                default: printf("无效的选择！\n");
+                case 11: 
+                    printf("退出登录！\n"); 
+                    goto logout_teacher;
+                default: 
+                    printf("无效的选择！\n");
                 }
                 system("pause");
                 system("cls");
@@ -1295,12 +1277,23 @@ int main() {
         else if (login_result == 2) {   // 学生登录成功
             while (1) {
                 switch (studentMenu()) {
-                case 1: viewStudent(head, current_user.student_id); break;
-                case 2: changeStudentPassword(head, current_user.student_id); break;
-                case 3: submitAppeal(head, current_user.student_id); break;
-                case 4: viewMyAppeals(current_user.student_id); break;
-                case 5: printf("退出登录！\n"); goto logout_student;
-                default: printf("无效的选择！\n");
+                case 1: 
+                    viewStudent(head, current_user.student_id); 
+                    break;
+                case 2: 
+                    changeStudentPassword(head, current_user.student_id);
+                    break;
+                case 3: 
+                    submitAppeal(head, current_user.student_id); 
+                    break;
+                case 4: 
+                    viewMyAppeals(current_user.student_id); 
+                    break;
+                case 5: 
+                    printf("退出登录！\n"); 
+                    goto logout_student;
+                default: 
+                    printf("无效的选择！\n");
                 }
                 system("pause");
                 system("cls");
@@ -1322,12 +1315,22 @@ int main() {
                         printf("请选择操作：");
                         scanf("%d", &sub_op);
                         switch (sub_op) {
-                        case 1: adminViewAllAppeals(); break;
-                        case 2: adminViewPendingAppeals(); break;
-                        case 3: adminMarkAppealDone(); break;
-                        case 4: adminDeleteProcessedAppeals(); break;
-                        case 5: goto back_to_admin_main;
-                        default: printf("无效选择！\n");
+                        case 1: 
+                            adminViewAllAppeals(); 
+                            break;
+                        case 2: 
+                            adminViewPendingAppeals(); 
+                            break;
+                        case 3: 
+                            adminMarkAppealDone();
+                            break;
+                        case 4: 
+                            adminDeleteProcessedAppeals(); 
+                            break;
+                        case 5: 
+                            goto back_to_admin_main;
+                        default: 
+                            printf("无效选择！\n");
                         }
                         system("pause");
                         system("cls");
@@ -1352,11 +1355,21 @@ int main() {
                         printf("请选择操作：");
                         scanf("%d", &op2);
                         switch (op2) {
-                        case 1: entryStudent(&head); break;
-                        case 2: head = deleteStudent(head); break;
-                        case 3: findStudent(head); break;
-                        case 4: changeStudent(head); break;
-                        case 5: countStudent(head); break;
+                        case 1: 
+                            entryStudent(&head); 
+                            break;
+                        case 2: 
+                            head = deleteStudent(head); 
+                            break;
+                        case 3: 
+                            findStudent(head); 
+                            break;
+                        case 4: 
+                            changeStudent(head); 
+                            break;
+                        case 5: 
+                            countStudent(head); 
+                            break;
                         case 6: {
                             char filename[100];
                             printf("请输入要导出的文件名（例如 passwords.txt）: ");
@@ -1371,8 +1384,10 @@ int main() {
                             importStudentsFromFile(&head, filename);
                             break;
                         }
-                        case 8: goto studentManageEnd;
-                        default: printf("无效选择！\n");
+                        case 8: 
+                            goto studentManageEnd;
+                        default: 
+                            printf("无效选择！\n");
                         }
                         system("pause");
                         system("cls");
@@ -1395,12 +1410,22 @@ int main() {
                         printf("请选择操作：");
                         scanf("%d", &t_op);
                         switch (t_op) {
-                        case 1: adminViewAllTeachers(); break;
-                        case 2: adminAddTeacher(); break;
-                        case 3: adminDeleteTeacher(); break;
-                        case 4: adminModifyTeacher(); break;
-                        case 5: goto teacherManageEnd;
-                        default: printf("无效选择！\n");
+                        case 1: 
+                            adminViewAllTeachers(); 
+                            break;
+                        case 2: 
+                            adminAddTeacher(); 
+                            break;
+                        case 3: 
+                            adminDeleteTeacher(); 
+                            break;
+                        case 4: 
+                            adminModifyTeacher(); 
+                            break;
+                        case 5: 
+                            goto teacherManageEnd;
+                        default: 
+                            printf("无效选择！\n");
                         }
                         system("pause");
                         system("cls");
