@@ -7,7 +7,6 @@
 #include <malloc.h>
 #include <time.h>
 #include <windows.h>
-
 #define APPEAL_FILE "appeals.dat"
 #define MAX_STR 20000  // 所有字符串数组的统一大小
 
@@ -136,6 +135,7 @@ void registerTeacher() {
         while (fscanf(fp, "%s %s %s %s", teas[count].id, teas[count].password,
             teas[count].name, teas[count].classname) == 4) {
             count++;
+            printf("123");
         }
         fclose(fp);
     }
