@@ -7,6 +7,7 @@
 #include <malloc.h>
 #include <time.h>
 #include <windows.h>
+
 #define APPEAL_FILE "appeals.dat"
 #define MAX_STR 20000  // 所有字符串数组的统一大小
 
@@ -49,60 +50,13 @@ typedef struct Appeal {
 } Appeal;
 Appeal* appealListHead = NULL;
 int nextAppealId = 1;
-
 typedef struct Teacher {
     char id[MAX_STR];
     char password[MAX_STR];
     char name[MAX_STR];
     char classname[MAX_STR];
 } Teacher;
-
 Teacher* current_teacher = NULL;   // 当前登录的教师对象（用于教师菜单）
-
-// 函数声明
-int teacherMenu();
-void registerTeacher();
-void registerAdmin();
-int login(Node* head);
-Node* creatNode();
-void entryStudent(Node** head);
-void printStudent(Node* head);
-void findStudent(Node* head);
-void changeStudent(Node* head);
-Node* deleteStudent(Node* head);
-void countStudent(Node* head);
-void saveStudent(Node* head);
-void readStudent(Node** head);
-int shouldSwap(Student* a, Student* b, int sort_by, int order);
-Node* quickSort(Node* head, int sort_by, int order);
-void exportStudentHuman(Node* head, const char* filename);
-int studentMenu();
-void changeStudentPassword(Node* head, long long student_id);
-void viewStudent(Node* head, long long student_id);
-void saveAppeals();
-void submitAppeal(Node* head, long long student_id);
-void viewMyAppeals(long long student_id);
-void mangerMenu();
-void appealMenu();
-void adminViewAllAppeals();
-void adminDeleteProcessedAppeals();
-void loadAppeals();
-void adminViewPendingAppeals();
-void adminMarkAppealDone();
-void viewStudentPassword(Node* head);
-void exportStudentPasswords(Node* head, const char* filename);
-void importStudentsFromFile(Node** head, const char* filename);
-void adminChangeStudent(Node* head);
-void adminTeacherMenu();
-void adminViewAllTeachers();
-void adminAddTeacher();
-void adminDeleteTeacher();
-void adminModifyTeacher();
-void freeStudentList(Node* head);
-void freeAppealList();
-void adminLoginTeacher();
-
-// 教师端菜单
 int teacherMenu() {
     printf("********************************************\n");
     printf("*            欢迎使用教师端管理系统        *\n");
@@ -135,7 +89,6 @@ void registerTeacher() {
         while (fscanf(fp, "%s %s %s %s", teas[count].id, teas[count].password,
             teas[count].name, teas[count].classname) == 4) {
             count++;
-            printf("123");
         }
         fclose(fp);
     }
@@ -578,7 +531,6 @@ void findStudent(Node* head) {
     }
     printf("未找到该学生\n");
 }
-
 // 修改学生成绩
 void changeStudent(Node* head) {
     printf("请输入要修改学生学号\n");
@@ -601,7 +553,6 @@ void changeStudent(Node* head) {
     }
     printf("未找到该学生\n");
 }
-
 // 删除学生
 Node* deleteStudent(Node* head) {
     if (head == NULL) {
@@ -662,7 +613,6 @@ Node* deleteStudent(Node* head) {
     printf("未找到该学号相对应的学生\n");
     return head;
 }
-
 // 排序辅助
 int shouldSwap(Student* a, Student* b, int sort_by, int order) {
     float sum_a, sum_b;
@@ -690,7 +640,6 @@ int shouldSwap(Student* a, Student* b, int sort_by, int order) {
         return sum_a > sum_b;
     }
 }
-
 // 快速排序
 Node* quickSort(Node* head, int sort_by, int order) {
     if (head == NULL || head->next == NULL) {
@@ -735,7 +684,6 @@ Node* quickSort(Node* head, int sort_by, int order) {
     pivot->next = rightHead;
     return newHead;
 }
-
 // 导出学生信息
 void exportStudentHuman(Node* head, const char* filename) {
     FILE* fp = fopen(filename, "w");
@@ -760,7 +708,6 @@ void exportStudentHuman(Node* head, const char* filename) {
     printf("成功导出文本文件: %s\n", filename);
     fclose(fp);
 }
-
 // 学生端菜单
 int studentMenu() {
     printf("********************************************\n");
@@ -778,7 +725,6 @@ int studentMenu() {
     while (getchar() != '\n');
     return select;
 }
-
 // 学生修改密码
 void changeStudentPassword(Node* head, long long student_id) {
     Node* current = head;
@@ -809,7 +755,6 @@ void changeStudentPassword(Node* head, long long student_id) {
     }
     printf("未找到学生信息\n");
 }
-
 // 学生查看信息
 void viewStudent(Node* head, long long student_id) {
     Node* current = head;
@@ -825,41 +770,79 @@ void viewStudent(Node* head, long long student_id) {
         printf("未找到学生信息\n");
         return;
     }
+    // 计算班级平均分
+    float sum_chinese = 0, sum_math = 0, sum_english = 0;
+    int class_count = 0;
+    Node* p = head;
+    while (p != NULL) {
+        if (strcmp(p->stu.classname, target->stu.classname) == 0) {
+            sum_chinese += p->stu.chinese;
+            sum_math += p->stu.math;
+            sum_english += p->stu.english;
+            class_count++;
+        }
+        p = p->next;
+    }
+    float avg_chinese = class_count > 0 ? sum_chinese / class_count : 0;
+    float avg_math = class_count > 0 ? sum_math / class_count : 0;
+    float avg_english = class_count > 0 ? sum_english / class_count : 0;
+
+    // 计算排名（原有逻辑）
     float total = target->stu.chinese + target->stu.math + target->stu.english;
     float chinese = target->stu.chinese;
     float math = target->stu.math;
     float english = target->stu.english;
     int rank_total = 1, rank_chinese = 1, rank_math = 1, rank_english = 1;
-    Node* p = head;
+    p = head;
     while (p != NULL) {
         if (p == target) {
             p = p->next;
             continue;
         }
         float p_total = p->stu.chinese + p->stu.math + p->stu.english;
-        if (p_total > total) {
-            rank_total++;
-        }
-        if (p->stu.chinese > chinese) {
-            rank_chinese++;
-        }
-        if (p->stu.math > math) {
-            rank_math++;
-        }
-        if (p->stu.english > english) {
-            rank_english++;
-        }
+        if (p_total > total) rank_total++;
+        if (p->stu.chinese > chinese) rank_chinese++;
+        if (p->stu.math > math) rank_math++;
+        if (p->stu.english > english) rank_english++;
         p = p->next;
     }
+    // 输出信息
     printf("学号: %lld\n", target->stu.number);
     printf("姓名: %s\n", target->stu.name);
     printf("班级: %s\n", target->stu.classname);
     printf("语文成绩: %.1f (班级排名: %d)\n", chinese, rank_chinese);
+    // 条形图比较
+    printf("        自己: ");
+    int bar_len_self = (int)(chinese / 5); // 每个5分一个字符
+    for (int i = 0; i < bar_len_self; i++) printf("█");
+    printf(" %.1f\n", chinese);
+    printf("        平均: ");
+    int bar_len_avg = (int)(avg_chinese / 5);
+    for (int i = 0; i < bar_len_avg; i++) printf("█");
+    printf(" %.1f\n", avg_chinese);
+
     printf("数学成绩: %.1f (班级排名: %d)\n", math, rank_math);
+    printf("        自己: ");
+    bar_len_self = (int)(math / 5);
+    for (int i = 0; i < bar_len_self; i++) printf("█");
+    printf(" %.1f\n", math);
+    printf("        平均: ");
+    bar_len_avg = (int)(avg_math / 5);
+    for (int i = 0; i < bar_len_avg; i++) printf("█");
+    printf(" %.1f\n", avg_math);
+
     printf("英语成绩: %.1f (班级排名: %d)\n", english, rank_english);
+    printf("        自己: ");
+    bar_len_self = (int)(english / 5);
+    for (int i = 0; i < bar_len_self; i++) printf("█");
+    printf(" %.1f\n", english);
+    printf("        平均: ");
+    bar_len_avg = (int)(avg_english / 5);
+    for (int i = 0; i < bar_len_avg; i++) printf("█");
+    printf(" %.1f\n", avg_english);
+
     printf("总分: %.1f (班级排名: %d)\n", total, rank_total);
 }
-
 // 申诉保存
 void saveAppeals() {
     FILE* fp = fopen(APPEAL_FILE, "wb");
@@ -873,7 +856,6 @@ void saveAppeals() {
     }
     fclose(fp);
 }
-
 // 提交申诉
 void submitAppeal(Node* head, long long student_id) {
     Node* p = head;
@@ -915,7 +897,6 @@ void submitAppeal(Node* head, long long student_id) {
     saveAppeals();
     printf("申诉提交成功！您的申诉ID为：%d\n", a->id);
 }
-
 // 查看我的申诉
 void viewMyAppeals(long long student_id) {
     Appeal* p = appealListHead;
@@ -943,7 +924,6 @@ void viewMyAppeals(long long student_id) {
         printf("暂无申诉记录。\n");
     }
 }
-
 // 管理员菜单
 void mangerMenu() {
     printf("********************************************\n");
@@ -959,7 +939,6 @@ void mangerMenu() {
     printf("*                8. 退出登录               *\n");
     printf("********************************************\n");
 }
-
 // 申诉管理子菜单
 void appealMenu() {
     printf("********************************************\n");
@@ -972,7 +951,6 @@ void appealMenu() {
     printf("*            5. 返回上一级                 *\n");
     printf("********************************************\n");
 }
-
 // 管理员查看所有申诉
 void adminViewAllAppeals() {
     if (appealListHead == NULL) {
@@ -998,7 +976,6 @@ void adminViewAllAppeals() {
         p = p->next;
     }
 }
-
 // 管理员删除已处理申诉
 void adminDeleteProcessedAppeals() {
     Appeal* p = appealListHead;
@@ -1031,7 +1008,6 @@ void adminDeleteProcessedAppeals() {
         printf("没有已处理的申诉可删除。\n");
     }
 }
-
 // 加载申诉
 void loadAppeals() {
     FILE* fp = fopen(APPEAL_FILE, "rb");
@@ -1063,7 +1039,6 @@ void loadAppeals() {
     }
     fclose(fp);
 }
-
 // 管理员查看待处理申诉
 void adminViewPendingAppeals() {
     Appeal* p = appealListHead;
@@ -1085,7 +1060,6 @@ void adminViewPendingAppeals() {
     }
     if (!found) printf("暂无待处理的申诉。\n");
 }
-
 // 管理员处理申诉
 void adminMarkAppealDone() {
     int id;
@@ -1112,7 +1086,6 @@ void adminMarkAppealDone() {
     }
     printf("未找到该申诉ID。\n");
 }
-
 // 管理员查看学生密码
 void viewStudentPassword(Node* head) {
     if (head == NULL) {
@@ -1137,7 +1110,6 @@ void viewStudentPassword(Node* head) {
     }
     printf("未找到该学号的学生！\n");
 }
-
 // 管理员导出学号密码
 void exportStudentPasswords(Node* head, const char* filename) {
     FILE* fp = fopen(filename, "w");
@@ -1154,7 +1126,6 @@ void exportStudentPasswords(Node* head, const char* filename) {
     fclose(fp);
     printf("学号、姓名、班级和密码已成功导出到文件：%s\n", filename);
 }
-
 // 管理员从文件导入学生
 void importStudentsFromFile(Node** head, const char* filename) {
     FILE* fp = fopen(filename, "r");
@@ -1221,7 +1192,6 @@ void importStudentsFromFile(Node** head, const char* filename) {
         printf("未导入任何学生。\n");
     }
 }
-
 // 管理员修改学生成绩
 void adminChangeStudent(Node* head) {
     if (head == NULL) {
@@ -1315,7 +1285,7 @@ void adminAddTeacher() {
         }
     }
     if (exists) {
-        printf("工号 %s 已存在！添加失败。\n", newTea.id);
+        printf("工号 %s 已存在,添加失败。\n", newTea.id);
         fclose(fp);
         return;
     }
@@ -1444,6 +1414,9 @@ void adminModifyTeacher() {
     fclose(fp);
     printf("教师信息修改成功！\n");
 }
+
+
+
 
 // 管理员登录教师端
 void adminLoginTeacher() {
@@ -1708,7 +1681,7 @@ int main() {
                     }
                 studentManageEnd:
                     break;
-                case 3:
+                case 3://123
                     countStudent(head);
                     break;
                 case 4:
